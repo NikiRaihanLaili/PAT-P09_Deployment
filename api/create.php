@@ -8,8 +8,15 @@ require_once '../config/database.php';
 require_once '../models/Film.php';
 require_once '../middleware/auth.php';
 
-// Verifikasi token
+/// Verifikasi token
 $decoded_token = authenticate_request(); 
+
+// Hanya admin yang bisa tambah movie
+if ($decoded_token->data->role !== 'admin') {
+    http_response_code(403);
+    echo json_encode(["message" => "Akses ditolak. Hanya admin yang dapat menambahkan film."]);
+    exit;
+}
 
 // Koneksi DB
 $database = new Database();
@@ -19,11 +26,19 @@ $film = new Film($conn);
 // Ambil data dari body JSON
 $data = json_decode(file_get_contents("php://input"));
 
-// Validasi data
-if (!empty($data->judul_film) && !empty($data->year_film) && !empty($data->genre_film)) {
-    $film->judul_film = htmlspecialchars(strip_tags($data->judul_film));
-    $film->year_film = htmlspecialchars(strip_tags($data->year_film));
-    $film->genre_film = htmlspecialchars(strip_tags($data->genre_film));
+// Validasi input
+if (
+    !empty($data->title) &&
+    !empty($data->genre) &&
+    !empty($data->release_year) &&
+    !empty($data->director) &&
+    isset($data->rating)
+) {
+    $film->title = htmlspecialchars(strip_tags($data->title));
+    $film->genre = htmlspecialchars(strip_tags($data->genre));
+    $film->release_year = htmlspecialchars(strip_tags($data->release_year));
+    $film->director = htmlspecialchars(strip_tags($data->director));
+    $film->rating = htmlspecialchars(strip_tags($data->rating));
 
     if ($film->create()) {
         http_response_code(201);

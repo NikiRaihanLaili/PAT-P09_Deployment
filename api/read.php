@@ -15,30 +15,30 @@ $database = new Database();
 $conn = $database->getConnection();
 $film = new Film($conn);
 
-// Ambil parameter query dari URL
-$id_film = isset($_GET['id_film']) ? $_GET['id_film'] : null;
-$judul_film = isset($_GET['judul_film']) ? $_GET['judul_film'] : null;
-$year_film = isset($_GET['year_film']) ? $_GET['year_film'] : null;
+// Ambil parameter dari query jika ada
+$id = isset($_GET['moviesid']) ? intval($_GET['moviesid']) : null;
 
-// Panggil metode read dengan parameter filter
-$result = $film->read($id_film, $judul_film, $year_film); 
-$itemCount = $result->rowCount();  // Menggunakan rowCount() untuk PDOStatement
-
-// Respon JSON
-if ($itemCount > 0) {
-    $filmArr = array();
-    $filmArr["body"] = array();
-    $filmArr["itemCount"] = $itemCount;
-
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-        array_push($filmArr["body"], $row);
+if ($id) {
+    $result = $film->readSingle($id);  // Fungsi ambil 1 film
+    if ($result) {
+        echo json_encode($result);
+    } else {
+        http_response_code(404);
+        echo json_encode(["message" => "Film tidak ditemukan."]);
     }
-
-    echo json_encode($filmArr);
 } else {
-    http_response_code(404);
-    echo json_encode([
-        "message" => "Data film tidak ditemukan."
-    ]);
+    $stmt = $film->readAll();  // Fungsi ambil semua film
+    $itemCount = $stmt->rowCount();
+
+    if ($itemCount > 0) {
+        $films = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $films[] = $row;
+        }
+        echo json_encode($films);
+    } else {
+        http_response_code(404);
+        echo json_encode(["message" => "Tidak ada data film."]);
+    }
 }
 ?>

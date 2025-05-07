@@ -1,15 +1,13 @@
 <?php
-class Film {
+class Favorite {
     // Database connection
     private $db;
     // Table name
-    private $db_table = "film_favorite";
+    private $db_table = "favorite";
 
     // Properties sesuai kolom tabel
-    public $id_film;
-    public $judul_film;
-    public $year_film;
-    public $genre_film;
+    public $users_id;
+    public $movies_id;
 
     public $result;
 
@@ -18,62 +16,34 @@ class Film {
         $this->db = $db;
     }
 
-    // GET ALL
-    public function getAllFilms(){
-        $sqlQuery = "SELECT id_film, judul_film, year_film, genre_film FROM " . $this->db_table;
+    // GET ALL FAVORITES BY USER
+    public function getAllFavoritesByUser(){
+        $sqlQuery = "SELECT movies.id, movies.title, movies.genre, movies.release_year, movies.director, movies.rating 
+                    FROM " . $this->db_table . " 
+                    JOIN movies ON favorite.movies_id = movies.id
+                    WHERE favorite.users_id = " . $this->users_id;
         $this->result = $this->db->query($sqlQuery);
         return $this->result;
     }
 
-    // GET SINGLE
-    public function getSingleFilm(){
-        $sqlQuery = "SELECT id_film, judul_film, year_film, genre_film FROM " . $this->db_table . " WHERE id_film = " . $this->id_film;
-        $record = $this->db->query($sqlQuery);
-        $dataRow = $record->fetch_assoc();
-
-        $this->judul_film = $dataRow['judul_film'];
-        $this->year_film = $dataRow['year_film'];
-        $this->genre_film = $dataRow['genre_film'];
-    }
-
-    // CREATE
-    public function createFilm(){
-        // Sanitasi input
-        $this->judul_film = htmlspecialchars(strip_tags($this->judul_film));
-        $this->year_film = htmlspecialchars(strip_tags($this->year_film));
-        $this->genre_film = htmlspecialchars(strip_tags($this->genre_film));
-
+    // ADD MOVIE TO FAVORITE
+    public function addFavorite(){
         $sqlQuery = "INSERT INTO " . $this->db_table . " 
-                    SET judul_film = '{$this->judul_film}', 
-                    year_film = '{$this->year_film}', 
-                    genre_film = '{$this->genre_film}'";
+                    SET users_id = '{$this->users_id}', 
+                    movies_id = '{$this->movies_id}'";
 
         $this->db->query($sqlQuery);
         return $this->db->affected_rows > 0;
     }
 
-    // UPDATE
-    public function updateFilm(){
-        $this->judul_film = htmlspecialchars(strip_tags($this->judul_film));
-        $this->year_film = htmlspecialchars(strip_tags($this->year_film));
-        $this->genre_film = htmlspecialchars(strip_tags($this->genre_film));
-        $this->id_film = htmlspecialchars(strip_tags($this->id_film));
-
-        $sqlQuery = "UPDATE " . $this->db_table . " 
-                    SET judul_film = '{$this->judul_film}', 
-                    year_film = '{$this->year_film}', 
-                    genre_film = '{$this->genre_film}'
-                    WHERE id_film = {$this->id_film}";
-
-        $this->db->query($sqlQuery);
-        return $this->db->affected_rows > 0;
-    }
-
-    // DELETE
-    public function deleteFilm(){
-        $sqlQuery = "DELETE FROM " . $this->db_table . " WHERE id_film = {$this->id_film}";
+    // REMOVE MOVIE FROM FAVORITE
+    public function removeFavorite(){
+        $sqlQuery = "DELETE FROM " . $this->db_table . " 
+                    WHERE users_id = {$this->users_id} 
+                    AND movies_id = {$this->movies_id}";
         $this->db->query($sqlQuery);
         return $this->db->affected_rows > 0;
     }
 }
+
 ?>
